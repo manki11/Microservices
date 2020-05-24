@@ -1,52 +1,59 @@
-const express = require('express');
-const bodyParser= require('body-parser');
-const cors= require('cors');
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const axios = require("axios");
 
-const app= express();
+const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const posts={}
+const posts = {};
 
-app.get('/posts', (req, res)=> {
-    res.status(201).send(posts)
-})
+const handleEvent = (type, data) => {
+  if (type === "PostCreated") {
+    const { id, title } = data;
+    posts[id] = {
+      id,
+      title,
+      comments: []
+    };
+  }
 
-app.post('/events', (req, res)=> {
-    const {type, data}= req.body;
+  if (type === "CommentCreated") {
+    const { id, content, postId, status } = data;
+    posts[postId].comments.push({
+      id,
+      content,
+      status
+    });
+  }
 
-    if(type === "PostCreated"){
-        const {id, title}= data;
-        posts[id] = {
-            id,
-            title,
-            comments:[]
-        }; 
-    }
+  if (type === "CommentUpdated") {
+    const { id, postId } = data;
 
-    if(type === "CommentCreated"){
-        const {id, content, postId, status}= data;
-        posts[postId].comments.push({
-            id,
-            content,
-            status
-        })
-    }
+    var foundIndex = posts[postId].comments.findIndex(c => c.id === id);
+    posts[postId].comments[foundIndex] = data;
+  }
+};
 
-    if(type=== "CommentUpdated"){
-        const {id, postId}= data;
+app.get("/posts", (req, res) => {
+  res.status(201).send(posts);
+});
 
-        var foundIndex = posts[postId].comments.findIndex(c => c.id === id);
-        posts[postId].comments[foundIndex] = data;
+app.post("/events", (req, res) => {
+  const { type, data } = req.body;
 
-        console.log(posts[postId])
-        console.log(data)
-    }
+  handleEvent(type, data);
 
-    res.status(201);
-})
+  res.status(201);
+});
 
+app.listen(4002, async () => {
+  console.log("Listening on port 4002");
 
-app.listen(4002,()=> {
-    console.log('Listening on port 4002')
+  const res = await axios.get("http://localhost:4005/events");
+
+  res.data.forEach(event => {
+    handleEvent(event.type, event.data);
+  });
 });
