@@ -13,7 +13,7 @@ app.post('/events', async (req, res)=> {
         
         var status = content.search("orange") == -1 ? "accept" : "reject";
 
-        await axios.post('http://localhost:4005/events', {
+        await axios.post('http://event-bus-srv:4005/events', {
         type:"CommentModerated",
         data: { postId, id, content, status}});
 

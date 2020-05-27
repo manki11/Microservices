@@ -24,7 +24,7 @@ app.post('/posts/:id/comments', async (req,res)=>{
     
     commentsByPostId[req.params.id]= comments;
 
-    await axios.post('http://localhost:4005/events', {
+    await axios.post('http://event-bus-srv:4005/events', {
         type:"CommentCreated",
         data: {
             postId: req.params.id,
@@ -49,7 +49,7 @@ app.post('/events', async (req,res)=> {
         var foundIndex = comments.findIndex(c => c.id === id);
         comments[foundIndex].status = status;
 
-        await axios.post('http://localhost:4005/events', {
+        await axios.post('http://event-bus-srv:4005/events', {
         type:"CommentUpdated",
         data: { postId, id, content, status}
     });
